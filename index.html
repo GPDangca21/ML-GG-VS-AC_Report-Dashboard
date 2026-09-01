@@ -267,6 +267,10 @@ const ITEMS = REPORT.items.filter(i => brandIds.includes(i.brand)).map(i => {
 });
 const bucketOf = it => (STATUS[it.status] || STATUS.moving).bucket;
 
+const linkLabel = url =>
+  /docs\.google\.com\/spreadsheets/.test(url) ? "Open the sheet" :
+  /docs\.google\.com\/document/.test(url)    ? "Open the doc"   : "Open link";
+
 /* approvals are simply the items awaiting a client decision */
 const asks = ITEMS.filter(i => i.status === "waiting");
 const askCount = id => (id === "all" ? asks.length : asks.filter(a => a.brand === id).length);
@@ -381,9 +385,6 @@ const statusCell = it => {
   const s = STATUS[it.status] || STATUS.moving;
   return `<div class="status ${s.cls}"><span class="mark" aria-hidden="true"></span>${s.label}</div>`;
 };
-const linkLabel = url =>
-  /docs\.google\.com\/spreadsheets/.test(url) ? "Open the sheet" :
-  /docs\.google\.com\/document/.test(url)    ? "Open the doc"   : "Open link";
 const refCell = it => (it.ref ? `<div>${esc(it.ref)}</div>` : "")
   + (it.url ? `<div><a href="${esc(it.url)}" target="_blank" rel="noopener">${linkLabel(it.url)}</a></div>` : "");
 
