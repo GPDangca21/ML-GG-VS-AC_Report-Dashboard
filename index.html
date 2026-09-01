@@ -77,6 +77,20 @@ body{
 .ask p{margin:3px 0 0;color:var(--ink-2);font-size:14.5px;max-width:70ch}
 .ask a{color:var(--ink)}
 
+/* ---------- filter bar ---------- */
+.filterbar{display:flex;flex-wrap:wrap;align-items:flex-end;gap:10px 14px;
+  background:var(--surface);padding:14px 16px;margin-bottom:16px}
+.fl{display:flex;flex-direction:column;gap:4px}
+.fl > span{font-size:11.5px;font-weight:600;color:var(--ink-3);letter-spacing:0.04em}
+.fl select,.fl input{font:inherit;font-size:14px;color:var(--ink);background:#fff;
+  border:1px solid var(--rule-strong);border-radius:2px;padding:6px 9px;min-width:150px}
+.fl input{min-width:210px}
+.fl select:focus-visible,.fl input:focus-visible{outline:2px solid var(--focus);outline-offset:1px}
+.fl.hidden{display:none}
+.filterbar .plain{margin-left:auto;align-self:flex-end;margin-bottom:7px}
+.filterbar .plain[hidden]{display:none}
+.emptystate{padding:26px 0;color:var(--ink-3);font-size:15px;border-top:1px solid var(--rule)}
+
 /* ---------- sub-tabs ---------- */
 .subbar{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px}
 .subtab{font:inherit;font-size:14px;font-weight:500;background:transparent;color:var(--ink-2);
@@ -100,10 +114,13 @@ body{
 .block > h2 .count{font-size:13.5px;color:var(--ink-3);font-weight:500}
 .block .note{margin:11px 0 0;font-size:14px;color:var(--ink-2);max-width:70ch}
 table{width:100%;border-collapse:collapse;margin-top:4px}
-th{text-align:left;font-size:12.5px;font-weight:600;font-stretch:104%;color:var(--ink-3);
-  padding:11px 14px 7px 0;border-bottom:1px solid var(--rule-strong)}
-td{padding:13px 14px 13px 0;border-bottom:1px solid var(--rule);vertical-align:top;font-size:15.5px}
-th:last-child,td:last-child{padding-right:0}
+th{text-align:left;font-size:12px;font-weight:700;font-stretch:106%;
+  text-transform:uppercase;letter-spacing:0.07em;
+  color:#fff;background:var(--ink);padding:10px 14px;border-bottom:0;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact}
+td{padding:13px 14px;border-bottom:1px solid var(--rule);vertical-align:top;font-size:15.5px}
+th:first-child,td:first-child{padding-left:12px}
+th:last-child,td:last-child{padding-right:12px}
 .c-status{width:126px}
 .c-ref{width:190px}
 .c-area{width:150px}
@@ -137,6 +154,9 @@ footer{margin-top:26px;font-size:13px;color:var(--ink-3);max-width:70ch}
   thead{display:none}
   tr{border-bottom:1px solid var(--rule);padding:14px 0}
   td{border:0;padding:0;width:auto!important}
+  th:first-child,td:first-child,th:last-child,td:last-child{padding-left:0;padding-right:0}
+  .fl input,.fl select{min-width:0;width:100%}
+  .fl,.fl.grow{flex:1 1 100%}
   td:empty{display:none}
   td.c-ref,td.c-area,td.c-brand{margin-top:5px}
   td.c-ref div{white-space:normal}
@@ -147,7 +167,7 @@ footer{margin-top:26px;font-size:13px;color:var(--ink-3);max-width:70ch}
 @media print{
   body{background:#fff}
   .wrap{max-width:none;padding:0}
-  .brandbar,.subbar,.plain{display:none}
+  .brandbar,.subbar,.plain,.filterbar{display:none}
   .logo{width:180px;margin-bottom:16px}
   .panel,.attention{border:1px solid #ccc;padding:16px}
   .block[hidden]{display:block!important}
@@ -185,6 +205,7 @@ footer{margin-top:26px;font-size:13px;color:var(--ink-3);max-width:70ch}
   <div id="askList"></div>
 </section>
 
+<div class="filterbar" id="filterbar"></div>
 <div class="subbar" role="tablist" aria-label="View" id="subbar"></div>
 <div class="toolrow">
   <p class="tally" id="tally"></p>
@@ -207,140 +228,10 @@ footer{margin-top:26px;font-size:13px;color:var(--ink-3);max-width:70ch}
    brand ids must match the brands list.
    ============================================================ */
 const REPORT = {
-  date: "2026-08-31",
-  shiftIn: "7:00 AM",
-  shiftOut: "3:00 PM",
-  timezone: "Manila",
-  preparedBy: "Gerome Dangca, Amazon Account Manager",
-  carryOver: "Remaining tasks continue tomorrow.",
-
-  brands: [
-    { id:"ml", name:"Merhoff & Larkin",  short:"Merhoff & Larkin" },
-    { id:"gg", name:"Galdor's Guild",    short:"Galdor's Guild" },
-    { id:"ac", name:"Alley Cats",        short:"Alley Cats" },
-    { id:"vs", name:"Vent Scent",        short:"Vent Scent" }
-  ],
-
-  /* Items needing a client decision. Keep this list short and honest. */
-  asks: [
-    { brand:"ml", title:"Approve the Pallet Cones product video",
-      detail:"AI-generated video is finished. Details attached in the Slack thread." },
-    { brand:"ml", title:"Approve the Sticky Pads product video",
-      detail:"AI-generated video is finished. Details attached in the Slack thread." },
-    { brand:"gg", title:"Approve the listing optimisation sheet",
-      detail:"Amazon and Helium 10 keyword work is ready for sign-off before anything goes live.",
-      link:{label:"Open the sheet", url:"https://docs.google.com/spreadsheets/d/1YIgdCIw0uOt7wUCYy_EJ74vNA5UcHyYcUr_p-wzuBvM/edit?usp=sharing"} },
-    { brand:"ml", title:"Confirm shipping mark for the Foam Brain samples",
-      detail:"Scarlet needs to know whether a shipping mark goes on the cartons before they ship to the laboratory." },
-    { brand:"ml", title:"Send the dog details for the coyote decoy",
-      detail:"Supplier Servina Yang is waiting on specifics from your team before quoting." },
-    { brand:"vs", title:"Grant Seller Central access for Vent Scent",
-      detail:"Account health cannot be reviewed until access is issued." }
-  ],
-
-  sections: [
-    {
-      id:"health", title:"Account health",
-      items:[
-        { brand:"ml", status:"issue", title:"Amazon — Food and Product Safety issue",
-          detail:"Foam Brain flagged under children's toys. This is the only open compliance flag across all accounts today." },
-        { brand:"gg", status:"done", title:"Amazon — no issues" },
-        { brand:"gg", status:"done", title:"TikTok Shop — no issues" },
-        { brand:"gg", status:"done", title:"Walmart — no issues", detail:"PPC portfolio under active monitoring." },
-        { brand:"ml", status:"done", title:"Walmart — no issues", detail:"PPC portfolio under active monitoring." },
-        { brand:"vs", status:"waiting", title:"Seller Central access not yet granted", detail:"Account health cannot be reviewed until access is issued." }
-      ]
-    },
-    {
-      id:"listings", title:"Listings and content",
-      items:[
-        { brand:"ml", status:"done", title:"All approved titles uploaded",
-          link:{label:"Title tracker", url:"https://docs.google.com/spreadsheets/d/1MdoRiT3ufg7cKbu4Uwh8EcIYTk2A8Gkx0Xy4Fohg4Os/edit?usp=sharing"} },
-        { brand:"ml", status:"moving", title:"Foam Brain title A/B test running",
-          detail:"Version A is outperforming Version B by 59%. Leaving it to run before calling a winner." },
-        { brand:"gg", status:"done", title:"Three new titles approved and uploaded" },
-        { brand:"ml", status:"done", title:"Listing optimisation sheet updated",
-          detail:"Amazon and Helium 10 keyword work is current.",
-          link:{label:"Open the sheet", url:"https://docs.google.com/spreadsheets/d/1YIgdCIw0uOt7wUCYy_EJ74vNA5UcHyYcUr_p-wzuBvM/edit?usp=sharing"} },
-        { brand:"gg", status:"waiting", title:"Listing optimisation sheet ready for approval",
-          link:{label:"Open the sheet", url:"https://docs.google.com/spreadsheets/d/1YIgdCIw0uOt7wUCYy_EJ74vNA5UcHyYcUr_p-wzuBvM/edit?usp=sharing"} },
-        { brand:"ml", status:"waiting", title:"Pallet Cones video ready for review" },
-        { brand:"ml", status:"waiting", title:"Sticky Pads video ready for review" },
-        { brand:"ml", status:"hold", title:"Closed for Cleaning sign video on hold",
-          detail:"Blocked on the AI video app. Will resume once it is available." },
-        { brand:"ac", status:"done", title:"All approved titles uploaded" },
-        { brand:"ac", status:"done", title:"Belt hanger wood grain — hero image updated" }
-      ]
-    },
-    {
-      id:"shipments", title:"Shipments",
-      note:"Chasing suppliers on missing tracking numbers, shipment status, production status and ship-ready dates.",
-      items:[
-        { brand:"ml", status:"issue", title:"Pallet Cones shipment problem",
-          detail:"Troubleshooting in progress with the supplier.", meta:{ "PO":"2074" } },
-        { brand:"ml", status:"moving", title:"CS Foam Brain Model", detail:"Receiving at the fulfilment centre.",
-          meta:{ "ASIN":"B0BPLQKFWK", "Shipment":"FBA19M9R6GBZ" } },
-        { brand:"ml", status:"moving", title:"Road Reflectors, 10 pack, blue", detail:"Receiving at the fulfilment centre.",
-          meta:{ "ASIN":"B08D8FH7R4", "Shipment":"FBA19MM7G048" } },
-        { brand:"ml", status:"done", title:"Wholesale commercial invoice sent to Nico" },
-        { brand:"ml", status:"waiting", title:"Foam Brain samples — shipping mark decision",
-          detail:"Scarlet needs to know whether a shipping mark goes on the cartons before they ship to the laboratory." },
-        { brand:"ac", status:"moving", title:"BJJ Belt Display", detail:"Receiving. Production completes by month end.", meta:{ "ASIN":"B08K1HF52Q" } },
-        { brand:"ac", status:"moving", title:"BJJ Belt Box", detail:"Receiving. Production completes by month end.", meta:{ "ASIN":"B09VYSS9RC" } },
-        { brand:"ac", status:"moving", title:"BJJ Belt Shelf", detail:"Receiving. Production completes by month end.", meta:{ "ASIN":"B09FYK587S" } },
-        { brand:"ac", status:"moving", title:"Wrestling cover cap", detail:"Receiving. Bulk order quantity estimate submitted.", meta:{ "ASIN":"B07BFHH5YP" } },
-        { brand:"ac", status:"moving", title:"Wrestling hair cap cover", detail:"Receiving. Bulk order quantity estimate submitted.", meta:{ "ASIN":"B085GH2LBK" } },
-        { brand:"vs", status:"moving", title:"Whole Home Air Freshener", detail:"Receiving.", meta:{ "ASIN":"B0DQYV2HDG" } },
-        { brand:"vs", status:"moving", title:"Whole Home Air Freshener", detail:"Receiving.", meta:{ "ASIN":"B0D92ZDT39" } },
-        { brand:"vs", status:"moving", title:"Whole Home Air Freshener", detail:"Receiving.", meta:{ "ASIN":"B0F3CL54LW" } },
-        { brand:"vs", status:"moving", title:"Reorders with supplier Fiona",
-          detail:"Handled as needed: shipment creation, supplier communication, addresses and labels." }
-      ]
-    },
-    {
-      id:"money", title:"Reimbursements",
-      items:[
-        { brand:"ml", status:"issue", title:"Some lost inbound claims have expired",
-          detail:"TrueOps checked today. Several lost inbound shipments were recovered; the rest fell outside the claim window and can no longer be filed." },
-        { brand:"ml", status:"moving", title:"Two reimbursement cases still open" },
-        { brand:"ml", status:"done", title:"No new reimbursement cases found" },
-        { brand:"ac", status:"done", title:"No new reimbursement cases found" },
-        { brand:"vs", status:"done", title:"No new reimbursement cases found" }
-      ]
-    },
-    {
-      id:"sourcing", title:"Sourcing",
-      items:[
-        { brand:"ml", status:"waiting", title:"Coyote decoy project",
-          detail:"Waiting on the dog details from your team before supplier Servina Yang can move. No new entries in the tracker today.",
-          link:{label:"Supplier tracker", url:"https://docs.google.com/spreadsheets/d/1jP4-LKl2AqfeNqQryn1qdzqaCyGuSQlV1aRaKJnCLGI/edit?gid=1597518902#gid=1597518902"} },
-        { brand:"ml", status:"moving", title:"Archery boar target",
-          detail:"Follow-ups sent to contacted suppliers. One more supplier added to the inquiry, awaiting their product clarification.",
-          link:{label:"Supplier tracker", url:"https://docs.google.com/spreadsheets/d/1V5V6ydRIJSQXVHKiIoO6p_UckKFHqNBfi4nYF22r0z8/edit?gid=1597518902#gid=1597518902"} }
-      ]
-    },
-    {
-      id:"weekly", title:"Weekly cadence",
-      items:[
-        { brand:"ml", status:"moving", title:"PPC — ACoS and ad spend monitored" },
-        { brand:"gg", status:"moving", title:"PPC — ACoS and ad spend monitored" },
-        { brand:"gg", status:"done", title:"PPC weekly stats posted to the thread" },
-        { brand:"ml", status:"done", title:"Helium 10 market tracker — no changes today" },
-        { brand:"ac", status:"moving", title:"PPC metrics", detail:"ACoS and ad spend review next Friday." }
-      ]
-    },
-    {
-      id:"monthly", title:"Monthly cadence",
-      items:[
-        { brand:"ml", status:"done", title:"PPC optimisation complete", detail:"Runs on the 15th and 30th. Next pass on the 15th." },
-        { brand:"ml", status:"done", title:"Advertising KPI report delivered", detail:"Next report on the 15th." },
-        { brand:"ml", status:"done", title:"ASIN targeting reviewed", detail:"Next review on the 15th." },
-        { brand:"ac", status:"done", title:"Manual campaign bid optimisation complete", detail:"Mid-month pass done." },
-        { brand:"ac", status:"moving", title:"Advertising KPI report", detail:"Due by month end." },
-        { brand:"ac", status:"moving", title:"ASIN product targeting campaigns", detail:"Due by month end." }
-      ]
-    }
-  ]
+  date:"2026-08-31", shiftIn:"7:00 AM", shiftOut:"3:00 PM", timezone:"Manila", preparedBy:"Gerome Dangca, Amazon Account Manager", carryOver:"Remaining tasks continue tomorrow.",
+  brands:[{id:"ml",name:"Merhoff & Larkin",short:"Merhoff & Larkin"},{id:"gg",name:"Galdor's Guild",short:"Galdor's Guild"},{id:"ac",name:"Alley Cats",short:"Alley Cats"},{id:"vs",name:"Vent Scent",short:"Vent Scent"}],
+  areas:[{id:"health",title:"Account health"},{id:"listings",title:"Listings and content"},{id:"shipments",title:"Shipments",note:"Chasing suppliers on missing tracking numbers, shipment status, production status and ship-ready dates."},{id:"money",title:"Reimbursements"},{id:"sourcing",title:"Sourcing"},{id:"weekly",title:"Weekly cadence"},{id:"monthly",title:"Monthly cadence"}],
+  items:[{brand:"ml",area:"health",status:"issue",title:"Amazon \u2014 Food and Product Safety issue",detail:"Foam Brain flagged under children's toys. This is the only open compliance flag across all accounts today."},{brand:"gg",area:"health",status:"done",title:"Amazon \u2014 no issues"},{brand:"gg",area:"health",status:"done",title:"TikTok Shop \u2014 no issues"},{brand:"gg",area:"health",status:"done",title:"Walmart \u2014 no issues",detail:"PPC portfolio under active monitoring."},{brand:"ml",area:"health",status:"done",title:"Walmart \u2014 no issues",detail:"PPC portfolio under active monitoring."},{brand:"vs",area:"health",status:"waiting",title:"Grant Seller Central access for Vent Scent",detail:"Account health cannot be reviewed until access is issued."},{brand:"ml",area:"listings",status:"done",title:"All approved titles uploaded",url:"https://docs.google.com/spreadsheets/d/1MdoRiT3ufg7cKbu4Uwh8EcIYTk2A8Gkx0Xy4Fohg4Os/edit?usp=sharing"},{brand:"ml",area:"listings",status:"moving",title:"Foam Brain title A/B test running",detail:"Version A is outperforming Version B by 59%. Leaving it to run before calling a winner."},{brand:"gg",area:"listings",status:"done",title:"Three new titles approved and uploaded"},{brand:"ml",area:"listings",status:"done",title:"Listing optimisation sheet updated",detail:"Amazon and Helium 10 keyword work is current.",url:"https://docs.google.com/spreadsheets/d/1YIgdCIw0uOt7wUCYy_EJ74vNA5UcHyYcUr_p-wzuBvM/edit?usp=sharing"},{brand:"gg",area:"listings",status:"waiting",title:"Approve the listing optimisation sheet",detail:"Amazon and Helium 10 keyword work is ready for sign-off before anything goes live.",url:"https://docs.google.com/spreadsheets/d/1YIgdCIw0uOt7wUCYy_EJ74vNA5UcHyYcUr_p-wzuBvM/edit?usp=sharing"},{brand:"ml",area:"listings",status:"waiting",title:"Approve the Pallet Cones product video",detail:"AI-generated video is finished. Details attached in the Slack thread."},{brand:"ml",area:"listings",status:"waiting",title:"Approve the Sticky Pads product video",detail:"AI-generated video is finished. Details attached in the Slack thread."},{brand:"ml",area:"listings",status:"hold",title:"Closed for Cleaning sign video on hold",detail:"Blocked on the AI video app. Will resume once it is available."},{brand:"ac",area:"listings",status:"done",title:"All approved titles uploaded"},{brand:"ac",area:"listings",status:"done",title:"Belt hanger wood grain \u2014 hero image updated"},{brand:"ml",area:"shipments",status:"issue",title:"Pallet Cones shipment problem",detail:"Troubleshooting in progress with the supplier.",ref:"PO 2074"},{brand:"ml",area:"shipments",status:"moving",title:"CS Foam Brain Model",detail:"Receiving at the fulfilment centre.",ref:"ASIN B0BPLQKFWK, Shipment FBA19M9R6GBZ"},{brand:"ml",area:"shipments",status:"moving",title:"Road Reflectors, 10 pack, blue",detail:"Receiving at the fulfilment centre.",ref:"ASIN B08D8FH7R4, Shipment FBA19MM7G048"},{brand:"ml",area:"shipments",status:"done",title:"Wholesale commercial invoice sent to Nico"},{brand:"ml",area:"shipments",status:"waiting",title:"Foam Brain samples",detail:"Samples currently awaiting review."},{brand:"ac",area:"shipments",status:"moving",title:"BJJ Belt Display",detail:"Receiving. Production completes by month end.",ref:"ASIN B08K1HF52Q"},{brand:"ac",area:"shipments",status:"moving",title:"BJJ Belt Box",detail:"Receiving. Production completes by month end.",ref:"ASIN B09VYSS9RC"},{brand:"ac",area:"shipments",status:"moving",title:"BJJ Belt Shelf",detail:"Receiving. Production completes by month end.",ref:"ASIN B09FYK587S"},{brand:"ac",area:"shipments",status:"moving",title:"Wrestling cover cap",detail:"Receiving. Bulk order quantity estimate submitted.",ref:"ASIN B07BFHH5YP"},{brand:"ac",area:"shipments",status:"moving",title:"Wrestling hair cap cover",detail:"Receiving. Bulk order quantity estimate submitted.",ref:"ASIN B085GH2LBK"},{brand:"vs",area:"shipments",status:"moving",title:"Whole Home Air Freshener",detail:"Receiving.",ref:"ASIN B0DQYV2HDG"},{brand:"vs",area:"shipments",status:"moving",title:"Whole Home Air Freshener",detail:"Receiving.",ref:"ASIN B0D92ZDT39"},{brand:"vs",area:"shipments",status:"moving",title:"Whole Home Air Freshener",detail:"Receiving.",ref:"ASIN B0F3CL54LW"},{brand:"vs",area:"shipments",status:"moving",title:"Reorders with supplier Fiona",detail:"Handled as needed: shipment creation, supplier communication, addresses and labels."},{brand:"ml",area:"money",status:"issue",title:"Some lost inbound claims have expired",detail:"TrueOps checked today. Several lost inbound shipments were recovered; the rest fell outside the claim window and can no longer be filed."},{brand:"ml",area:"money",status:"moving",title:"Three reimbursement cases still open",detail:"x1 new ML reimbursement case"},{brand:"ml",area:"money",status:"done",title:"No new reimbursement cases found"},{brand:"ac",area:"money",status:"done",title:"No new reimbursement cases found"},{brand:"vs",area:"money",status:"done",title:"No new reimbursement cases found"},{brand:"ml",area:"sourcing",status:"waiting",title:"Send the dog details for the coyote decoy",detail:"Supplier Servina Yang is waiting on specifics from your team before quoting.",url:"https://docs.google.com/spreadsheets/d/1jP4-LKl2AqfeNqQryn1qdzqaCyGuSQlV1aRaKJnCLGI/edit?gid=1597518902#gid=1597518902"},{brand:"ml",area:"sourcing",status:"moving",title:"Archery boar target",detail:"Follow-ups sent to contacted suppliers. Still awaiting for clarification.",url:"https://docs.google.com/spreadsheets/d/1V5V6ydRIJSQXVHKiIoO6p_UckKFHqNBfi4nYF22r0z8/edit?gid=1597518902#gid=1597518902"},{brand:"ml",area:"weekly",status:"moving",title:"PPC \u2014 ACoS and ad spend monitored"},{brand:"gg",area:"weekly",status:"moving",title:"PPC \u2014 ACoS and ad spend monitored"},{brand:"gg",area:"weekly",status:"done",title:"PPC weekly stats posted to the thread"},{brand:"ml",area:"weekly",status:"done",title:"Helium 10 market tracker \u2014 no changes today"},{brand:"ac",area:"weekly",status:"moving",title:"PPC metrics",detail:"ACoS and ad spend review next Friday."},{brand:"ml",area:"monthly",status:"done",title:"PPC optimisation complete",detail:"Runs on the 15th and 30th. Next pass on the 15th."},{brand:"ml",area:"monthly",status:"done",title:"Advertising KPI report delivered",detail:"Next report on the 15th."},{brand:"ml",area:"monthly",status:"done",title:"ASIN targeting reviewed",detail:"Next review on the 15th."},{brand:"ac",area:"monthly",status:"done",title:"Manual campaign bid optimisation complete",detail:"Mid-month pass done."},{brand:"ac",area:"monthly",status:"moving",title:"Advertising KPI report",detail:"Due by month end."},{brand:"ac",area:"monthly",status:"moving",title:"ASIN product targeting campaigns",detail:"Due by month end."}]
 };
 
 /* ============================================================
@@ -368,15 +259,16 @@ const brandName = id => (REPORT.brands.find(b => b.id === id) || {}).short || id
 const esc = s => String(s).replace(/[&<>"']/g, c =>
   ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" }[c]));
 
-/* flatten every item once, carrying its section */
-const ITEMS = [];
-REPORT.sections.forEach(sec => sec.items.forEach(it => {
-  if (!brandIds.includes(it.brand)) return;
-  ITEMS.push(Object.assign({}, it, { section: sec.id, area: sec.title, note: sec.note }));
-}));
+/* flatten every item once, resolving its area */
+const AREA = id => REPORT.areas.find(a => a.id === id) || { id: id, title: id };
+const ITEMS = REPORT.items.filter(i => brandIds.includes(i.brand)).map(i => {
+  const a = AREA(i.area);
+  return Object.assign({}, i, { areaId: a.id, area: a.title, note: a.note });
+});
 const bucketOf = it => (STATUS[it.status] || STATUS.moving).bucket;
 
-const asks = REPORT.asks.filter(a => brandIds.includes(a.brand));
+/* approvals are simply the items awaiting a client decision */
+const asks = ITEMS.filter(i => i.status === "waiting");
 const askCount = id => (id === "all" ? asks.length : asks.filter(a => a.brand === id).length);
 
 let activeBrand = brands.length === 1 ? brands[0].id : "all";
@@ -404,16 +296,47 @@ document.getElementById("askList").innerHTML = asks.map(a => `
   <div class="ask" data-brand="${esc(a.brand)}">
     <span class="dot" aria-hidden="true"></span>
     <div>
-      <h3>${activeBrand === "all" ? "" : ""}${esc(brandName(a.brand))} — ${esc(a.title)}</h3>
+      <h3>${esc(brandName(a.brand))} — ${esc(a.title)}</h3>
       ${a.detail ? `<p>${esc(a.detail)}</p>` : ""}
-      ${a.link ? `<p><a href="${esc(a.link.url)}" target="_blank" rel="noopener">${esc(a.link.label)}</a></p>` : ""}
+      ${a.url ? `<p><a href="${esc(a.url)}" target="_blank" rel="noopener">${linkLabel(a.url)}</a></p>` : ""}
     </div>
   </div>`).join("");
 
+/* ---------------- filters ---------------- */
+document.getElementById("filterbar").innerHTML = `
+  <label class="fl" id="flBrand"><span>Brand</span><select id="fBrand"><option value="">All brands</option>${
+    brands.map(b => `<option value="${esc(b.id)}">${esc(b.short)}</option>`).join("")}</select></label>
+  <label class="fl"><span>Area</span><select id="fArea"><option value="">All areas</option>${
+    REPORT.areas.map(s => `<option value="${esc(s.title)}">${esc(s.title)}</option>`).join("")}</select></label>
+  <label class="fl"><span>Status</span><select id="fStatus"><option value="">Any status</option>${
+    Object.entries(STATUS).map(([k, s]) => `<option value="${esc(k)}">${esc(s.label)}</option>`).join("")}</select></label>
+  <label class="fl grow"><span>Search</span><input id="fQ" type="search" placeholder="Task, detail, ASIN or shipment"></label>
+  <button class="plain" id="fClear" type="button" hidden>Clear filters</button>`;
+
+const fBrand  = document.getElementById("fBrand");
+const fArea   = document.getElementById("fArea");
+const fStatus = document.getElementById("fStatus");
+const fQ      = document.getElementById("fQ");
+const fClear  = document.getElementById("fClear");
+
+const anyFilter = () => !!(fBrand.value || fArea.value || fStatus.value || fQ.value.trim());
+
+function passes(it) {
+  if (fBrand.value  && it.brand  !== fBrand.value)  return false;
+  if (fArea.value   && it.area   !== fArea.value)   return false;
+  if (fStatus.value && it.status !== fStatus.value) return false;
+  const q = fQ.value.trim().toLowerCase();
+  if (q) {
+    const hay = [it.title, it.detail || "", brandName(it.brand), it.area, it.ref || ""].join(" ").toLowerCase();
+    if (!hay.includes(q)) return false;
+  }
+  return true;
+}
+
 /* ---------------- chart ---------------- */
-function drawChart(scope) {
-  const rows = (scope === "all" ? brands : brands.filter(b => b.id === scope)).map(b => {
-    const mine = ITEMS.filter(i => i.brand === b.id);
+function drawChart(scoped) {
+  const rows = brands.map(b => {
+    const mine = scoped.filter(i => i.brand === b.id);
     return {
       name: b.short,
       out:  mine.filter(i => bucketOf(i) === "out").length,
@@ -458,11 +381,11 @@ const statusCell = it => {
   const s = STATUS[it.status] || STATUS.moving;
   return `<div class="status ${s.cls}"><span class="mark" aria-hidden="true"></span>${s.label}</div>`;
 };
-const refCell = it => {
-  const bits = it.meta ? Object.entries(it.meta).map(([k, v]) => `<div>${esc(k)} ${esc(v)}</div>`).join("") : "";
-  const lnk = it.link ? `<div><a href="${esc(it.link.url)}" target="_blank" rel="noopener">${esc(it.link.label)}</a></div>` : "";
-  return bits + lnk;
-};
+const linkLabel = url =>
+  /docs\.google\.com\/spreadsheets/.test(url) ? "Open the sheet" :
+  /docs\.google\.com\/document/.test(url)    ? "Open the doc"   : "Open link";
+const refCell = it => (it.ref ? `<div>${esc(it.ref)}</div>` : "")
+  + (it.url ? `<div><a href="${esc(it.url)}" target="_blank" rel="noopener">${linkLabel(it.url)}</a></div>` : "");
 
 function table(items, cols) {
   const head = { status:"Status", task:"Task", ref:"Reference", area:"Area", brand:"Brand" };
@@ -489,7 +412,8 @@ function blockHTML(id, title, items, cols, note) {
 
 /* ---------------- render ---------------- */
 function render() {
-  const scoped = activeBrand === "all" ? ITEMS : ITEMS.filter(i => i.brand === activeBrand);
+  const scoped = ITEMS.filter(i =>
+    (activeBrand === "all" || i.brand === activeBrand) && passes(i));
   const content = document.getElementById("content");
   let groups;
 
@@ -501,11 +425,11 @@ function render() {
       cols: ["status", "task", "brand", "area"]
     })).filter(g => g.items.length);
   } else {
-    groups = REPORT.sections.map(sec => ({
-      key: sec.id,
-      title: sec.title,
-      note: sec.note,
-      items: scoped.filter(i => i.section === sec.id),
+    groups = REPORT.areas.map(a => ({
+      key: a.id,
+      title: a.title,
+      note: a.note,
+      items: scoped.filter(i => i.areaId === a.id),
       cols: ["status", "task", "ref"]
     })).filter(g => g.items.length);
   }
@@ -513,7 +437,9 @@ function render() {
   const keys = groups.map(g => g.key);
   if (activeSub !== "all" && !keys.includes(activeSub)) activeSub = "all";
 
-  content.innerHTML = groups.map(g => blockHTML(g.key, g.title, g.items, g.cols, g.note)).join("");
+  content.innerHTML = groups.length
+    ? groups.map(g => blockHTML(g.key, g.title, g.items, g.cols, g.note)).join("")
+    : `<p class="emptystate">No items match these filters. Clear one to widen the view.</p>`;
   content.querySelectorAll(".block").forEach(b =>
     b.hidden = activeSub !== "all" && b.dataset.key !== activeSub);
 
@@ -529,7 +455,11 @@ function render() {
   document.getElementById("chartLede").textContent = activeBrand === "all"
     ? "Every task logged today, grouped by whether it is moving, waiting on you, or finished."
     : brandName(activeBrand) + " only. Same three groups.";
-  drawChart(activeBrand);
+  drawChart(scoped);
+
+  /* filter chrome */
+  document.getElementById("flBrand").classList.toggle("hidden", activeBrand !== "all");
+  fClear.hidden = !anyFilter();
 
   const issues = scoped.filter(i => i.status === "issue");
   const fl = document.getElementById("flagline");
@@ -549,8 +479,9 @@ function render() {
   document.querySelectorAll(".brandtab").forEach(t =>
     t.setAttribute("aria-selected", t.dataset.brand === activeBrand));
   const shown = [...content.querySelectorAll(".block:not([hidden]) tbody tr")].length;
+  const pool = ITEMS.filter(i => activeBrand === "all" || i.brand === activeBrand).length;
   document.getElementById("tally").textContent =
-    `${shown} of ${scoped.length} items shown` +
+    `${shown} of ${pool} items shown` +
     (activeBrand === "all" ? " across all brands." : ` for ${brandName(activeBrand)}.`);
 }
 
@@ -561,11 +492,22 @@ document.getElementById("footer").textContent =
   REPORT.carryOver + " Prepared by " + REPORT.preparedBy + ".";
 
 /* ---------------- events ---------------- */
+["input", "change"].forEach(ev =>
+  document.getElementById("filterbar").addEventListener(ev, e => {
+    if (e.target === fClear) return;
+    render();
+  }));
+fClear.addEventListener("click", () => {
+  fBrand.value = ""; fArea.value = ""; fStatus.value = ""; fQ.value = "";
+  render();
+});
+
 document.getElementById("brandbar").addEventListener("click", e => {
   const t = e.target.closest(".brandtab");
   if (!t) return;
   activeBrand = t.dataset.brand;
   activeSub = "all";
+  if (activeBrand !== "all") fBrand.value = "";
   render();
 });
 document.getElementById("subbar").addEventListener("click", e => {
